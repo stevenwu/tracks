@@ -1,5 +1,5 @@
 development:
-  adapter: mysql2
+  adapter: sqlite3
   database: tracks
   # set this if you are storing utf8 in your mysql database to handle strings
   # like "Réné". Not needed for sqlite. For PostgreSQL use encoding: unicode
@@ -31,7 +31,7 @@ production:
 # re-generated from your development database when you run "rake".
 # Do not set this db to the same as development or production.
 test: &TEST
-  adapter: mysql2
+  adapter: sqlite3
   database: tracks_test
   username: root
   encoding: utf8
