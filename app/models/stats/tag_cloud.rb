@@ -2,33 +2,42 @@
 #  http://www.juixe.com/techknow/index.php/2006/07/15/acts-as-taggable-tag-cloud/
 class TagCloud
 
-  attr_reader :user, :tags, :min, :divisor
+  attr_reader :user, :min, :divisor
   def initialize(user, cut_off = nil)
     @user = user
     @cut_off = cut_off
   end
 
-  # TODO: parameterize limit
-  def compute
-    levels=10
-
-    params = [sql(@cut_off), user.id]
-    if @cut_off
-      params += [@cut_off, @cut_off]
+  def tags
+    unless @tags
+      params = [sql(@cut_off), user.id]
+      if @cut_off
+        params += [@cut_off, @cut_off]
+      end
+      @tags = Tag.find_by_sql(params).sort_by { |tag| tag.name.downcase }
     end
-    @tags = Tag.find_by_sql(params).sort_by { |tag| tag.name.downcase }
+    @tags
+  end
 
-    max, @min = 0, 0
-    @tags.each { |t|
-      max = [t.count.to_i, max].max
-      @min = [t.count.to_i, @min].min
-    }
+  def min
+    0
+  end
 
-    @divisor = ((max - @min) / levels) + 1
+  def divisor
+    @divisor ||= ((max - min) / levels) + 1
   end
 
   private
 
+  def max
+    tag_counts.max
+  end
+
+  def tag_counts
+    @tag_counts ||= tags.map {|t| t.count.to_i}
+  end
+
+  # TODO: parameterize limit
   def sql(cut_off = nil)
     query = "SELECT tags.id, tags.name AS name, count(*) AS count"
     query << " FROM taggings, tags, todos"
@@ -43,5 +52,9 @@ class TagCloud
     query << " GROUP BY tags.id, tags.name"
     query << " ORDER BY count DESC, name"
     query << " LIMIT 100"
+  end
+
+  def levels
+    10
   end
 end
